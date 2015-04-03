@@ -3,7 +3,6 @@ Created on Feb 26, 2015
 
 @author: Solaman
 '''
-import TransitionError
 from DedekindNode import DedekindNode
 
 class DedekindLattice(object):
@@ -16,21 +15,33 @@ class DedekindLattice(object):
     '''
 
 
-    def __init__(self, inputSize):
+    def __init__(self, inputSize, inputSet = None ):
         '''
         Constructor. For now, we will store each monotone boolean function
         as an object. Future implementations will store them as a single bit
-        for lean memory usage
+        for lean memory usage.
+        @param inputSize- Size of input for the monotone boolean functions (MBF).
+        @param inputSet- Set to use for each monotone boolean function. If
+        the caller wishes to use a python set for interacting with the MBF's can
+        provide one here. Defaults to values found in "resources/setValues.csv"
         '''
+        
         if inputSize < 0:
             raise Exception("Input size must be greater than or equal to 0")
-        self.lattice = {}
+        
+        self.setMapping = {}
+        if inputSet == None:
+            setValues = open("resources/setValues.csv").readAll()
+            setValues = setValues.split(",")
+            
         
         #bit mask refers to the possible bit values
         #of a given configuration. E.G. boolean functions with 4 inputs
         #Will have a bit mask of 0xF
         self.bitMask = 2**(inputSize) - 1
         self.inputSize = inputSize
+        
+        self.lattice = {}
         
         self.emptyFunction = DedekindNode(self.inputSize, [])
         self.lattice[ self.emptyFunction.getIndex()] = self.emptyFunction
@@ -78,7 +89,7 @@ class DedekindLattice(object):
             if node.isVisited == True:
                 if node.parent == None:
                     functionCount += node.childrenCount
-                    print functionCount
+                    return functionCount
                     continue
                 else:
                     node.parent.childrenCount += node.childrenCount
@@ -113,6 +124,9 @@ class DedekindLattice(object):
             
            
     def generateDotFiles(self):
+        '''
+        
+        '''
         import os
         directoryName = os.path.join("GeneratedDedekindLattices", str(self.inputSize) + "_DedekindLattice")
         if not os.path.exists(directoryName):
@@ -124,18 +138,25 @@ class DedekindLattice(object):
             generatedFiles += 1
             if generatedFiles % updateTime == 0:
                 print generatedFiles, " written so far"
+        print "Done"
         
 
-
-if __name__ == "__main__":
-    import sys
-    if len(sys.argv) < 2:
-        print "Error: must provide the input size of the Dedekind Lattice"
-    inputSize = sys.argv[1]
-    dedekind = DedekindLattice(int(inputSize))
-    dedekind.fillLattice()
+def getDedekindNumber(userInput):
+    '''
+    Constructs the Dedekind Lattice for the given input size and 
+    returns the dedekind number associated with that input.
+    Values that return within a minute are currently n <= 5.
+    '''
+    inputSize = int(userInput[0])
+    dedekindLattice = DedekindLattice(inputSize)
+    print dedekindLattice.findUniqueFunctions()
     
-    if len(sys.argv) > 2:
-        if sys.argv[2] == "true":
-            dedekind.generateDotFiles()
-    print dedekind.monotoneCount
+def generateDotFiles(userInput):
+    '''
+    Constructs the Dedekind Lattice for the given input size and
+    generates the dot files for each monotone boolean function with the given input size.
+    '''
+    inputSize = int(userInput[0])
+    dedekindLattice = DedekindLattice(inputSize)
+    dedekindLattice.fillLattice()
+    dedekindLattice.generateDotFiles()

@@ -204,8 +204,8 @@ class DedekindNode(object):
         
         dotFile.close()
         
-        pngFileName = dotFileName[:-3]+"pdf"
-        call("dot -Tpdf " + os.getcwd()+"\\" + dotFileName + " -o " + os.getcwd() + "\\"+ pngFileName, shell=True)
+       # pngFileName = dotFileName[:-3]+"pdf"
+       # call("dot -Tpdf " + os.getcwd()+"\\" + dotFileName + " -o " + os.getcwd() + "\\"+ pngFileName, shell=True)
                         
     def initDotVariables(self):
         global fullNodes, configurationLabelss, dotEdgess

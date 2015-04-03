@@ -4,7 +4,7 @@ Created on Mar 2, 2015
 @author: Solaman
 '''
 import unittest
-from DedekindLattice import DedekindLattice
+from Model.DedekindLattice import DedekindLattice
 
 class Test(unittest.TestCase):
 

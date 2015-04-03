@@ -4,7 +4,7 @@ Created on Mar 3, 2015
 @author: Solaman
 '''
 import unittest
-from DedekindNode import DedekindNode
+from Model.DedekindNode import DedekindNode
 
 class Test(unittest.TestCase):
 
@@ -107,7 +107,7 @@ class Test(unittest.TestCase):
         
     def testBadConfigurations(self):
         '''
-        Tests if the constructor will raise an error if a bad list
+        Test if the constructor will raise an error if a bad list
         of configurations is given (one configuration is two levels above all others)
         '''
         self.assertRaises( Exception, DedekindNode, (4, self.invalidConfigurations) )
