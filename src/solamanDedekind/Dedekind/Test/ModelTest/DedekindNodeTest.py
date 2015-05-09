@@ -5,6 +5,7 @@ Created on Mar 3, 2015
 '''
 import unittest
 from Model.DedekindNode import DedekindNode
+from Model.DedekindNode import getIndex
 
 class Test(unittest.TestCase):
 
@@ -80,26 +81,25 @@ class Test(unittest.TestCase):
         configurations = [31, 30, 29, 27, 23, 15, 28, 7, 14, 22, 13 ]
         node = DedekindNode(5, configurations)
         children = node.generateChildren()
-        children = sorted(children, key = lambda child: child.getIndex())
+        children = sorted(children, key = lambda child: getIndex(child))
         self.assertEquals( set(children[0].acceptedConfigurations[-1]), set([6]))
         self.assertEquals( set(children[1].acceptedConfigurations[-1]), set([12]))
         self.assertEquals( set(children[2].acceptedConfigurations[-1]), set([6, 12]))
         
         
     def testGetLevelOneConfigurations(self):
-        self.assertEquals(self.dedekindNode.getLevelOneConfigurations(), self.levelOneConfigurations)
+        from Model.DedekindNode import getLevelOneConfigurations
+        self.assertEquals(getLevelOneConfigurations(self.dedekindNode.inputSize), self.levelOneConfigurations)
 
     def testGetIndex(self):
-        self.assertEquals(self.dedekindNode.getIndex(), 57344)
-        
-    def testAcceptedConfigurationsAsList(self):
-        self.assertEquals(self.dedekindNode.acceptedConfigurationsAsList(), self.orderedConfigurations)
+        self.assertEquals(getIndex(self.dedekindNode), 57344)
         
     def testIsConsistent(self):
         configurations = [31, 30, 29, 27, 23, 15, 28, 7, 14, 22, 13 ]
         node = DedekindNode(5, configurations)
-        self.assertTrue( node.isConsistent(29))
+        self.assertTrue(node.isConsistent(29))
         self.assertFalse(node.isConsistent(8))
+        
         
 #     def testUnorderedConfigurations(self):
 #         dedekindNode = DedekindNode( 4, self.unorderedConfigurations)

@@ -4,52 +4,23 @@ Created on Feb 26, 2015
 @author: Solaman
 '''
 from DedekindNode import DedekindNode
+from Model.LevelPermutor import LevelPermutor
+from DedekindNode import getIndex
 
-class DedekindLattice(object):
+class LatticeFiller(object):
     '''
-    We aim to generate the Dedekind Lattices using this class. Namely,
-    We want to generate all monotone boolean functions given an n input size.
-    Currently, we will aim to only generate the lattices in working memory.
-    Future implementations will hopefully be able to dynamically
-    Generate a node of a given Lattice.
+    Constructed when the Lattice is constructed if the user wants to fill in the 
+    lattice with each Monotone Boolean Function individually.  
+    This class provides a level of abstraction from the inner workings of the module.
     '''
-
-
-    def __init__(self, inputSize, inputSet = None ):
-        '''
-        Constructor. For now, we will store each monotone boolean function
-        as an object. Future implementations will store them as a single bit
-        for lean memory usage.
-        @param inputSize- Size of input for the monotone boolean functions (MBF).
-        @param inputSet- Set to use for each monotone boolean function. If
-        the caller wishes to use a python set for interacting with the MBF's can
-        provide one here. Defaults to values found in "resources/setValues.csv"
-        '''
+    def __init__(self, lattice):
+        self.lattice = lattice
+        self.nodeList = []
+        self.nodeList.append(lattice.emptyFunction)
+        self.nodeList.append(lattice.baseFunction)
+        self.wasFilled = False
         
-        if inputSize < 0:
-            raise Exception("Input size must be greater than or equal to 0")
-        
-        self.setMapping = {}
-        if inputSet == None:
-            setValues = open("resources/setValues.csv").readAll()
-            setValues = setValues.split(",")
-            
-        
-        #bit mask refers to the possible bit values
-        #of a given configuration. E.G. boolean functions with 4 inputs
-        #Will have a bit mask of 0xF
-        self.bitMask = 2**(inputSize) - 1
-        self.inputSize = inputSize
-        
-        self.lattice = {}
-        
-        self.emptyFunction = DedekindNode(self.inputSize, [])
-        self.lattice[ self.emptyFunction.getIndex()] = self.emptyFunction
-        
-        self.baseFunction = DedekindNode(self.inputSize, [self.bitMask])
-        self.lattice[ self.baseFunction.getIndex()] = self.baseFunction
-        
-    def getNextNode(self):     
+    def getNextNode(self):
         '''
         Returns the most recently added node to the queue 
         if it is not empty.
@@ -60,69 +31,139 @@ class DedekindLattice(object):
         children = node.generateChildren()
         for child in children:
             self.nodeList.append(child)
-            self.lattice[child.getIndex()] = child
+            self.lattice.lattice[getIndex(child)] = child
         return node
-        
-        
+    
     def fillLattice(self):
-        self.nodeList = []
-        self.nodeList.append(self.baseFunction)
         while self.getNextNode() != None:
-            x = 1
-        self.monotoneCount= len( self.lattice.values())
+            continue
+        
+    def getDedekindNumber(self):
+        if self.wasFilled == False:
+            self.fillLattice()
+        self.wasFilled = True
+        return len(self.lattice.lattice.values())
+        
+class LatticeFillerUnique(object):
+    '''
+    Constructed when the Lattice is constructed if the user would like to fill in
+    the lattice with Monotone Boolean Functions that are equivalent by level.
+    This class provides a level of abstraction from the inner workings of the module.
+    '''
+    def __init__(self, lattice, lean= False):
+        from Model.DedekindNodeLean import DedekindNodeLean
+        if lean == True:
+            lattice.baseFunction = DedekindNodeLean(lattice.baseFunction.inputSize,\
+                                                    lattice.baseFunction.acceptedConfigurations[-1])
             
-    def findUniqueFunctions(self):
+        self.lattice = lattice
+        self.nodeList = []
+        lattice.emptyFunction.isVisited = False
+        lattice.emptyFunction.parent = None
+        self.nodeList.append(lattice.emptyFunction)
+        lattice.baseFunction.isVisited = False
+        lattice.baseFunction.parent = None
+        self.nodeList.append(lattice.baseFunction)
+        self.levelPermutor = LevelPermutor(lattice.inputSize)
+        self.mileMarker = 10000
+        
+        self.wasFilled = False
+        
+    def getNextNode(self):
         #We don't need to compute functions that are isomorphisms of each other.
         #We store each function by there level, and then counts by the number of possible children for the function
         #It is proven that functions by level that have the same number of possible children are isomorphisms
         #{"level" : {"isomorphismCount": count, "children" : children } }
-        self.nodeList = []
-        functionCount = 1
-        self.childrenCounts = {}
-        
-        self.baseFunction.isVisited = False
-        self.baseFunction.parent = None
-        self.nodeList.append(self.baseFunction)
-        
-        while self.nodeList != []:
-            node = self.nodeList.pop()
-            if node.isVisited == True:
-                if node.parent == None:
-                    functionCount += node.childrenCount
-                    return functionCount
-                    continue
-                else:
-                    node.parent.childrenCount += node.childrenCount
-                    key = self.getKey(node)
-                    self.childrenCounts[ node.level][key] = node.childrenCount
-                    continue
-            
-            node.level = len(node.acceptedConfigurations) - 1
-            if node.level not in self.childrenCounts:
-                self.childrenCounts [ node.level] = {}
-            
-            node.possibleConfigurations = node._generatePossibleConfigurations()
-            node.possibleConfigurationSize = len(node.possibleConfigurations)
-            key = self.getKey(node)
-            if key in self.childrenCounts[node.level]:
-                node.parent.childrenCount += self.childrenCounts[node.level][ key]
+        if self.nodeList == []:
+            return None
+        node = self.nodeList.pop()
+        if node.isVisited == True:
+            if node.parent == None:
+                return node
             else:
-                children = node.generateChildren()
-                node.childrenCount = 1
-                node.isVisited = True
-                self.nodeList.append(node)
-                for child in children:
-                    child.parent = node
-                    child.isVisited = False
-                    self.nodeList.append(child)
+                node.parent.childrenCount += node.childrenCount
+                if node.parent.childrenCount >= self.mileMarker:
+                    print "marker: ", self.mileMarker
+                    self.mileMarker = node.parent.childrenCount * 2
+                return self.getNextNode()
+        
+        if self.getKey(node) in self.levelPermutor:
+            node.parent.childrenCount += self.levelPermutor[self.getKey(node)].childrenCount
+            return self.getNextNode()
+        else:
+            self.lattice.lattice[ getIndex(node.getAcceptedConfigurationsAsList()) ] = node
+            node.childrenCount = 1
+            self.levelPermutor[node.getLastLevel()] = node
+            children = node.generateChildren()
+            node.isVisited = True
+            self.nodeList.append(node)
+            for child in children:
+                child.parent = node
+                child.isVisited = False
+                self.nodeList.append(child)
+            return node
         
     def getKey(self, node):
-        return str(len(node.acceptedConfigurations[node.level])) + "-" + str(node.possibleConfigurationSize)
+        if hasattr(node, "key"):
+            return node.key
+        else:
+            node.key = getIndex(node.getLastLevel())
+        return node.key
+        
+    def fillLattice(self):
+        while self.getNextNode() != None:
+            continue
+        
+    def getDedekindNumber(self):
+        if self.wasFilled == False:
+            self.fillLattice()
+        self.wasFilled = True
+        return self.lattice.baseFunction.childrenCount + 1
+        
+class DedekindLattice(object):
+    '''
+    We aim to generate the Dedekind Lattices using this class. Namely,
+    We want to generate all monotone boolean functions given an n input size.
+    Currently, we will aim to only generate the lattices in working memory.
+    Future implementations will hopefully be able to dynamically
+    Generate a node of a given Lattice.
+    '''
+
+    def __init__(self, inputSize, generateUnique = True, lean = False):
+        '''
+        Constructor. For now, we will store each monotone boolean function
+        as an object. Future implementations will store them as a single bit
+        for lean memory usage
+        '''
+        if inputSize < 0:
+            raise Exception("Input size must be greater than or equal to 0")
+        self.lattice = {}
+        
+        #bit mask refers to the possible bit values
+        #of a given configuration. E.G. boolean functions with 4 inputs
+        #Will have a bit mask of 0xF
+        self.bitMask = 2**(inputSize) - 1
+        self.inputSize = inputSize
+        
+        self.emptyFunction = DedekindNode(self.inputSize, [])
+        self.lattice[ getIndex(self.emptyFunction)] = self.emptyFunction
+        
+        self.baseFunction = DedekindNode(self.inputSize, [self.bitMask])
+        self.lattice[ getIndex(self.baseFunction)] = self.baseFunction
+        
+        if generateUnique:
+            self.latticeFiller = LatticeFillerUnique(self, lean)
+            
+        else:
+            self.latticeFiller = LatticeFiller(self)
+            
+    def getDedekindNumber(self):
+        return self.latticeFiller.getDedekindNumber()
+    
+    def getNextNode(self):
+        return self.latticeFiller.getNextNode()
                     
-            
-            
-            
-           
+                  
     def generateDotFiles(self):
         '''
         
@@ -148,8 +189,8 @@ def getDedekindNumber(userInput):
     Values that return within a minute are currently n <= 5.
     '''
     inputSize = int(userInput[0])
-    dedekindLattice = DedekindLattice(inputSize)
-    print dedekindLattice.findUniqueFunctions()
+    dedekindLattice = DedekindLattice(inputSize, lean =True)
+    print dedekindLattice.getDedekindNumber()
     
 def generateDotFiles(userInput):
     '''

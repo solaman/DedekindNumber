@@ -1,6 +1,0 @@
-March 3rd, 2015: GeneratedDedekindLattices will not be included in a git commit
-unless a file is included. This is that file.
-
-Note: We could have the application generate this folder as needed, but I believe
-that because the folder's existence isn't tied to a run of the application
-("dedekind world 5" would be a folder that is tied) the user might expect the folder to already exist.

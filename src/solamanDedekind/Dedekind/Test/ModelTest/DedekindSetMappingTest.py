@@ -1,19 +1,9 @@
 '''
 Created on Apr 2, 2015
-
 @author: Solaman
 '''
 import unittest
-import mock
 from Model.DedekindSetMapping import DedekindSetMapping
-from mock import mock_open, patch
-from pandas.util.testing import assertRaises
-
-class FakeFile(object):
-        def __init__(self):
-            pass
-        def readAll(self):
-            return "A,B,C,D,E,F,G"
         
 class Test(unittest.TestCase):
         
