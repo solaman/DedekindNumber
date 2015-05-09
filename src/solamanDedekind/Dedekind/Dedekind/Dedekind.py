@@ -8,6 +8,7 @@ from Controller import Console
 from Model.DedekindLattice import getDedekindNumber, generateDotFiles
 
 import sys
+from Algorithms.analysis import runAnalysis
 
 def runConsole():
     global standardCommands
@@ -23,7 +24,10 @@ standardCommands.addCommand("getNumber", "Finds Dedekind Number for a given inpu
 standardCommands.addCommand("dotFiles", "Generates dot files of all monotone boolean functions"\
                             + " for a given input size." + "\n\tInput:" + " function input size", generateDotFiles)
 
+standardCommands.addCommand("analyze", "Runs a System-Diagnostic algorithm"\
+                            + " and perform analysis on varying MBF's" +"\n\tInput: algorithm name, input size", runAnalysis )
 standardCommands.addCommand("console", "Run the program as a console.", runConsole)
+
         
 def main():
     userInput = sys.argv[1:]
